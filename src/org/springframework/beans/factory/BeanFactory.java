@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.stereotype.Component;
 
@@ -28,7 +29,7 @@ public class BeanFactory {
       System.out.println(resource);
       File file = new File(resource.toURI());
       String[] fileNames = file.list();
-      for (var fileName : fileNames) {
+      for (var fileName : Objects.requireNonNull(fileNames)) {
         if (fileName.endsWith(".class")) {
           String className = fileName.substring(0, fileName.lastIndexOf("."));
           Class classObject = Class.forName(basePackage + "." + className);
