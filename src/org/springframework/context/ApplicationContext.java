@@ -14,6 +14,13 @@ public class ApplicationContext {
     beanFactory.populateProperties();
   }
 
+  public ApplicationContext(Class<?> configuration)
+      throws ReflectiveOperationException, IOException, URISyntaxException {
+    beanFactory.instantiate(configuration);
+    beanFactory.populateProperties();
+  }
+
+
   public BeanFactory getBeanFactory() {
     return beanFactory;
   }

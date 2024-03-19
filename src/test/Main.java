@@ -8,9 +8,11 @@ public class Main {
 
   public static void main(String[] args)
       throws IOException, URISyntaxException, ReflectiveOperationException {
-    ApplicationContext applicationContext = new ApplicationContext("test");
+
+    ApplicationContext applicationContext = new ApplicationContext(
+        MyApplicationContextConfiguration.class);
     ProductService productService = (ProductService) applicationContext.getBeanFactory()
-        .getBean("productService");
-    System.out.println(productService.getPromotionsService());
+        .getBean("test.ProductService");
+    System.out.println(productService.getPromotionsService().getId());
   }
 }
