@@ -3,6 +3,8 @@ package org.springframework.beans.factory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -12,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.PreDestroy;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.stereotype.Component;
 
@@ -62,15 +65,17 @@ public class BeanFactory {
       }
     }
   }
-  public void injectBeanNames(){
+
+  public void injectBeanNames() {
     for (String name : singletons.keySet()) {
       Object bean = singletons.get(name);
-      if(bean instanceof BeanNameAware){
+      if (bean instanceof BeanNameAware) {
         ((BeanNameAware) bean).setBeanName(name);
       }
     }
   }
-  public void initializeBeans(){
+
+  public void initializeBeans() {
     for (String name : singletons.keySet()) {
       Object bean = singletons.get(name);
       for (BeanPostProcessor postProcessor : postProcessors) {
@@ -86,7 +91,27 @@ public class BeanFactory {
   }
 
   private List<BeanPostProcessor> postProcessors = new ArrayList<>();
-  public void addPostProcessor(BeanPostProcessor postProcessor){
+
+  public void addPostProcessor(BeanPostProcessor postProcessor) {
     postProcessors.add(postProcessor);
+  }
+
+  public void close() {
+    for (Object bean : singletons.values()) {
+      for (Method method : bean.getClass().getMethods()) {
+        if (method.isAnnotationPresent(PreDestroy.class)) {
+          try {
+            method.invoke(bean);
+          } catch (IllegalAccessException e) {
+            e.printStackTrace();
+          } catch (InvocationTargetException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+      if (bean instanceof DisposableBean) {
+        ((DisposableBean) bean).destroy();
+      }
+    }
   }
 }
