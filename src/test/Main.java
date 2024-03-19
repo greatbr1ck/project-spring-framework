@@ -20,5 +20,6 @@ public class Main {
     PromotionsService promotionsService = productService.getPromotionsService();
     System.out.println("Bean name = " + promotionsService.getBeanName());
     beanFactory.initializeBeans();
+    beanFactory.addPostProcessor(new CustomPostProcessor());
   }
 }

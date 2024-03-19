@@ -5,11 +5,14 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.stereotype.Component;
 
 public class BeanFactory {
@@ -68,10 +71,22 @@ public class BeanFactory {
     }
   }
   public void initializeBeans(){
-    for (Object bean : singletons.values()) {
-      if(bean instanceof InitializingBean){
+    for (String name : singletons.keySet()) {
+      Object bean = singletons.get(name);
+      for (BeanPostProcessor postProcessor : postProcessors) {
+        postProcessor.postProcessBeforeInitialization(bean, name);
+      }
+      if (bean instanceof InitializingBean) {
         ((InitializingBean) bean).afterPropertiesSet();
       }
+      for (BeanPostProcessor postProcessor : postProcessors) {
+        postProcessor.postProcessAfterInitialization(bean, name);
+      }
     }
+  }
+
+  private List<BeanPostProcessor> postProcessors = new ArrayList<>();
+  public void addPostProcessor(BeanPostProcessor postProcessor){
+    postProcessors.add(postProcessor);
   }
 }
