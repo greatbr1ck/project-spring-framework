@@ -19,5 +19,6 @@ public class Main {
     beanFactory.injectBeanNames();
     PromotionsService promotionsService = productService.getPromotionsService();
     System.out.println("Bean name = " + promotionsService.getBeanName());
+    beanFactory.initializeBeans();
   }
 }

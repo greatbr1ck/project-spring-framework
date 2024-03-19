@@ -67,4 +67,11 @@ public class BeanFactory {
       }
     }
   }
+  public void initializeBeans(){
+    for (Object bean : singletons.values()) {
+      if(bean instanceof InitializingBean){
+        ((InitializingBean) bean).afterPropertiesSet();
+      }
+    }
+  }
 }
