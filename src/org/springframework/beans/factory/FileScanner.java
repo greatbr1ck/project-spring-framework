@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import test.MyApplicationContextConfiguration;
 
 public class FileScanner {
     private static ArrayList<Class> componentFiles = new ArrayList<>();
@@ -15,7 +16,6 @@ public class FileScanner {
         String rootDirectoryPath = rootDirectoryName.replace('.', '/');
         URL rootDirectoryURL = ClassLoader.getSystemClassLoader().getResource(rootDirectoryPath);
         File rootDirectory = new File(rootDirectoryURL.toURI());
-
         searchFiles(rootDirectory, rootDirectoryName);
         System.out.println("found componentFiles");
         for (var clazz: componentFiles) System.out.println(clazz.toString());
@@ -41,5 +41,11 @@ public class FileScanner {
 
     static ArrayList<Class> getComponentFiles() {
         return componentFiles;
+    }
+
+    static Class<?> getConfigurations() {
+        // TODO write method
+        // Метод должен найти и вернуть файл помеченный @Configuration, или вернуть null если такого нет
+        return null;
     }
 }
