@@ -38,4 +38,8 @@ public class FileScanner {
             }
         }
     }
+
+    static ArrayList<Class> getComponentFiles() {
+        return componentFiles;
+    }
 }
