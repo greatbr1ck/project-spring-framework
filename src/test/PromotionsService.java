@@ -1,18 +1,14 @@
 package test;
 
-import org.springframework.beans.factory.BeanNameAware;
-import org.springframework.beans.factory.stereotype.Component;
+public class PromotionsService {
 
-@Component
-public class PromotionsService implements BeanNameAware {
-  private String beanName;
+  private String id;
 
-  @Override
-  public void setBeanName(String name) {
-    beanName = name;
+  public String getId() {
+    return id;
   }
 
-  public String getBeanName() {
-    return beanName;
+  public void setId(String id) {
+    this.id = id;
   }
 }
