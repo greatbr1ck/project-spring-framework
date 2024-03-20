@@ -5,9 +5,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +13,8 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Bean;
 import org.springframework.beans.factory.annotation.ComponentScan;
+import org.springframework.beans.factory.annotation.PreDestroy;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.exceptions.ConfigurationsException;
 
 public class BeanFactory {
@@ -34,29 +33,28 @@ public class BeanFactory {
   }
 
   public void instantiate(String basePackage)
-          throws ReflectiveOperationException, IOException, URISyntaxException, ConfigurationsException {
-    Class<?> configuration = FileScanner.getConfigurations(basePackage);
-
-    // configuration != null is always true in this realisation
-    if (configuration != null) {
+      throws ReflectiveOperationException, URISyntaxException {
+    try {
+      Class<?> configuration = FileScanner.getConfigurations(basePackage);
       for (var method : configuration.getMethods()) {
         if (method.isAnnotationPresent(Bean.class)) {
           method.setAccessible(true);
           addBean(method.invoke(configuration.newInstance()));
         }
       }
+    } catch (ClassNotFoundException ignored) {
+    } catch (ConfigurationsException e) {
+      throw new RuntimeException(e);
     }
     findComponent(basePackage);
   }
 
   public void instantiate(Class<?> configuration)
       throws ReflectiveOperationException, IOException, URISyntaxException {
-    if (configuration != null) {
-      for (var method : configuration.getMethods()) {
-        if (method.isAnnotationPresent(Bean.class)) {
-          method.setAccessible(true);
-          addBean(method.invoke(configuration.newInstance()));
-        }
+    for (var method : configuration.getMethods()) {
+      if (method.isAnnotationPresent(Bean.class)) {
+        method.setAccessible(true);
+        addBean(method.invoke(configuration.newInstance()));
       }
     }
     if (configuration.isAnnotationPresent(ComponentScan.class)) {
