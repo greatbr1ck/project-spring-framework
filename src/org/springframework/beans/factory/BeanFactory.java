@@ -10,6 +10,7 @@ import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Bean;
 import org.springframework.beans.factory.annotation.ComponentScan;
+import org.springframework.exceptions.ConfigurationsException;
 
 public class BeanFactory {
 
@@ -27,8 +28,10 @@ public class BeanFactory {
   }
 
   public void instantiate(String basePackage)
-      throws ReflectiveOperationException, IOException, URISyntaxException {
-    Class<?> configuration = FileScanner.getConfigurations();
+          throws ReflectiveOperationException, IOException, URISyntaxException, ConfigurationsException {
+    Class<?> configuration = FileScanner.getConfigurations(basePackage);
+
+    // configuration != null is always true in this realisation
     if (configuration != null) {
       for (var method : configuration.getMethods()) {
         if (method.isAnnotationPresent(Bean.class)) {
@@ -58,7 +61,7 @@ public class BeanFactory {
   public void findComponent(String basePackage)
       throws ReflectiveOperationException, URISyntaxException {
     ArrayList<Class> componentFiles = FileScanner.getComponentFiles(basePackage);
-    
+
     for (var component : Objects.requireNonNull(componentFiles)) {
       addBean(component.newInstance());
     }
