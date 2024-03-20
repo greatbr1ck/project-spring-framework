@@ -12,16 +12,19 @@ import test.MyApplicationContextConfiguration;
 public class FileScanner {
     private static ArrayList<Class> componentFiles = new ArrayList<>();
 
-    public static void instantiate(String rootDirectoryName) throws IOException, URISyntaxException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+    public static ArrayList<Class> getComponentFiles(String basePackage) throws URISyntaxException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+        instantiate(basePackage);
+        return componentFiles;
+    }
+
+    private static void instantiate(String rootDirectoryName) throws URISyntaxException, ClassNotFoundException {
         String rootDirectoryPath = rootDirectoryName.replace('.', '/');
         URL rootDirectoryURL = ClassLoader.getSystemClassLoader().getResource(rootDirectoryPath);
         File rootDirectory = new File(rootDirectoryURL.toURI());
         searchFiles(rootDirectory, rootDirectoryName);
-        System.out.println("found componentFiles");
-        for (var clazz: componentFiles) System.out.println(clazz.toString());
     }
 
-    static void searchFiles(File currentDirectory, String rootDirectoryName) throws ClassNotFoundException {
+    private static void searchFiles(File currentDirectory, String rootDirectoryName) throws ClassNotFoundException {
         File[] childFiles = currentDirectory.listFiles();
 
         for (var file : childFiles) {
@@ -37,10 +40,6 @@ public class FileScanner {
                 searchFiles(file, rootDirectoryName);
             }
         }
-    }
-
-    static ArrayList<Class> getComponentFiles() {
-        return componentFiles;
     }
 
     static Class<?> getConfigurations() {
