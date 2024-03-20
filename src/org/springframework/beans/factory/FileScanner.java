@@ -1,80 +1,70 @@
 package org.springframework.beans.factory;
 
+import org.springframework.beans.factory.annotation.Configuration;
 import org.springframework.beans.factory.stereotype.Component;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
+import java.util.List;
+
+import org.springframework.exceptions.ConfigurationsException;
+import test.MyApplicationContextConfiguration;
 
 public class FileScanner {
-    private String basePackage;
-    private ArrayList<Class> componentFiles;
-
-    public FileScanner(String basePackage) throws IOException, URISyntaxException, ClassNotFoundException, InstantiationException, IllegalAccessException {
-        this.basePackage = basePackage;
-        this.componentFiles = new ArrayList();
-        componentFiles = new ArrayList<>();
-        instantiate(basePackage);
+    public static ArrayList<Class> getComponentFiles(String basePackage) throws URISyntaxException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+        ArrayList<Class> componentFiles = new ArrayList<>();
+        instantiate(componentFiles, basePackage);
+        return componentFiles;
     }
-    public void instantiate(String basePackage) throws IOException, URISyntaxException, ClassNotFoundException, InstantiationException, IllegalAccessException {
-        String path = basePackage.replace('.', '/');
-        System.out.println(path);
-        URL root = ClassLoader.getSystemClassLoader().getResource(path);
 
-        System.out.println(root);
-        File file = new File(root.toURI());
-        String[] childFiles = file.list();
-        System.out.println("Children");
-        for (var fileName : childFiles) {
-            System.out.println(fileName);
+    private static void instantiate(List<Class> componentFiles, String rootDirectoryName) throws URISyntaxException, ClassNotFoundException {
+        String rootDirectoryPath = rootDirectoryName.replace('.', '/');
+        URL rootDirectoryURL = ClassLoader.getSystemClassLoader().getResource(rootDirectoryPath);
+        File rootDirectory = new File(rootDirectoryURL.toURI());
+
+        searchFiles(componentFiles, rootDirectory, rootDirectoryName, Component.class);
+    }
+
+    static Class<?> getConfigurations(String rootDirectoryName) throws URISyntaxException, ClassNotFoundException, ConfigurationsException {
+        String rootDirectoryPath = rootDirectoryName.replace('.', '/');
+        URL rootDirectoryURL = ClassLoader.getSystemClassLoader().getResource(rootDirectoryPath);
+        File rootDirectory = new File(rootDirectoryURL.toURI());
+        ArrayList<Class> configurationsFiles = new ArrayList<>();
+
+        try {
+            searchFiles(configurationsFiles, rootDirectory, rootDirectoryName, Configuration.class);
+
+            if (configurationsFiles.size() == 0) throw new ClassNotFoundException();
+            if (configurationsFiles.size() > 1) throw new ConfigurationsException();
+
+            System.out.println("conf " + configurationsFiles.get(0).toString());
+            return configurationsFiles.get(0);
+        } catch (ClassNotFoundException exception) {
+            throw new ClassNotFoundException("Error! Project needs contain @Configuration file");
+            // some code, doing without Configuration
+        } catch (ConfigurationsException e) {
+            throw new ConfigurationsException();
         }
-
-        System.out.println("subdirectories");
-        String[] directories = file.list(new FilenameFilter() {
-            @Override
-            public boolean accept(File current, String name) {
-                return new File(current, name).isDirectory();
-            }
-        });
-        System.out.println(Arrays.toString(directories));
-        searchFiles(file);
-        for (var cl: componentFiles) System.out.println(cl);
-
     }
 
+    private static void searchFiles(List<Class> foundFiles, File currentDirectory, String rootDirectoryName, Class annotationClass) throws ClassNotFoundException {
+        File[] childFiles = currentDirectory.listFiles();
 
-    void searchFiles(File currentDirectory) throws ClassNotFoundException, InstantiationException, IllegalAccessException, URISyntaxException {
-        String[] childFiles = currentDirectory.list();
+        for (var file : childFiles) {
+            String path = file.getPath();
+            if (path.endsWith(".class")) {
+                String className = path.substring(path.indexOf(rootDirectoryName), path.lastIndexOf('.')).replace('/', '.');
+                Class classObject = Class.forName(className);
 
-        for (var fileName : childFiles) {
-            if (fileName.endsWith(".class")) {
-                String className = fileName.substring(0, fileName.lastIndexOf("."));
-                Class classObject = Class.forName(basePackage + "." + className);
-
-                if (classObject.isAnnotationPresent(Component.class)) {
-                    componentFiles.add(classObject);
+                if (classObject.isAnnotationPresent(annotationClass)) {
+                    foundFiles.add(classObject);
                 }
-            }
-
-            String[] childDirectoryNames = currentDirectory.list(new FilenameFilter() {
-                @Override
-                public boolean accept(File current, String name) {
-                    return new File(current, name).isDirectory();
-                }
-            });
-
-            for (var childDirectoryName : childDirectoryNames) {
-                String childDirectoryPath = basePackage + '/' + childDirectoryName;
-                System.out.println(childDirectoryPath);
-                URL childDirectoryURL = ClassLoader.getSystemClassLoader().getResource(childDirectoryPath);
-                System.out.println(childDirectoryURL);
-                File childDirectoryFile = new File(childDirectoryURL.toURI());
-                searchFiles(childDirectoryFile);
+            } else {
+                searchFiles(foundFiles, file, rootDirectoryName, annotationClass);
             }
         }
     }

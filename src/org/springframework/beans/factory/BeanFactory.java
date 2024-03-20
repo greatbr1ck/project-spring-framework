@@ -1,19 +1,22 @@
 package org.springframework.beans.factory;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.beans.factory.stereotype.Component;
+import org.springframework.beans.factory.annotation.Bean;
+import org.springframework.beans.factory.annotation.ComponentScan;
+import org.springframework.exceptions.ConfigurationsException;
 
 public class BeanFactory {
 
@@ -23,28 +26,52 @@ public class BeanFactory {
     return singletons.get(beanName);
   }
 
+  private void addBean(Object bean) {
+    String beanClassName = bean.getClass().getName();
+    System.out.println("Component: " + beanClassName);
+    String beanName = beanClassName.substring(0, 1).toLowerCase() + beanClassName.substring(1);
+    singletons.put(beanName, bean);
+  }
+
   public void instantiate(String basePackage)
-      throws IOException, URISyntaxException, ClassNotFoundException, InstantiationException, IllegalAccessException {
-    String path = basePackage.replace('.', '/');
-    Enumeration<URL> resources = ClassLoader.getSystemClassLoader().getResources(path);
-    while (resources.hasMoreElements()) {
-      URL resource = resources.nextElement();
-      System.out.println(resource);
-      File file = new File(resource.toURI());
-      String[] fileNames = file.list();
-      for (var fileName : Objects.requireNonNull(fileNames)) {
-        if (fileName.endsWith(".class")) {
-          String className = fileName.substring(0, fileName.lastIndexOf("."));
-          Class classObject = Class.forName(basePackage + "." + className);
-          if (classObject.isAnnotationPresent(Component.class)) {
-            System.out.println("Component: " + classObject);
-            Object instance = classObject.newInstance();
-            String beanName = className.substring(0, 1).toLowerCase() + className.substring(1);
-            singletons.put(beanName, instance);
-          }
+          throws ReflectiveOperationException, IOException, URISyntaxException, ConfigurationsException {
+    Class<?> configuration = FileScanner.getConfigurations(basePackage);
+
+    // configuration != null is always true in this realisation
+    if (configuration != null) {
+      for (var method : configuration.getMethods()) {
+        if (method.isAnnotationPresent(Bean.class)) {
+          method.setAccessible(true);
+          addBean(method.invoke(configuration.newInstance()));
         }
       }
     }
+    findComponent(basePackage);
+  }
+
+  public void instantiate(Class<?> configuration)
+      throws ReflectiveOperationException, IOException, URISyntaxException {
+    if (configuration != null) {
+      for (var method : configuration.getMethods()) {
+        if (method.isAnnotationPresent(Bean.class)) {
+          method.setAccessible(true);
+          addBean(method.invoke(configuration.newInstance()));
+        }
+      }
+    }
+    if (configuration.isAnnotationPresent(ComponentScan.class)) {
+      findComponent(configuration.getAnnotation(ComponentScan.class).basePackage());
+    }
+  }
+
+  public void findComponent(String basePackage)
+      throws ReflectiveOperationException, URISyntaxException {
+    ArrayList<Class> componentFiles = FileScanner.getComponentFiles(basePackage);
+
+    for (var component : Objects.requireNonNull(componentFiles)) {
+      addBean(component.newInstance());
+    }
+    System.out.println(singletons);
   }
 
   public void populateProperties() throws IllegalAccessException {
@@ -62,15 +89,17 @@ public class BeanFactory {
       }
     }
   }
-  public void injectBeanNames(){
+
+  public void injectBeanNames() {
     for (String name : singletons.keySet()) {
       Object bean = singletons.get(name);
-      if(bean instanceof BeanNameAware){
+      if (bean instanceof BeanNameAware) {
         ((BeanNameAware) bean).setBeanName(name);
       }
     }
   }
-  public void initializeBeans(){
+
+  public void initializeBeans() {
     for (String name : singletons.keySet()) {
       Object bean = singletons.get(name);
       for (BeanPostProcessor postProcessor : postProcessors) {
@@ -86,7 +115,27 @@ public class BeanFactory {
   }
 
   private List<BeanPostProcessor> postProcessors = new ArrayList<>();
-  public void addPostProcessor(BeanPostProcessor postProcessor){
+
+  public void addPostProcessor(BeanPostProcessor postProcessor) {
     postProcessors.add(postProcessor);
+  }
+
+  public void close() {
+    for (Object bean : singletons.values()) {
+      for (Method method : bean.getClass().getMethods()) {
+        if (method.isAnnotationPresent(PreDestroy.class)) {
+          try {
+            method.invoke(bean);
+          } catch (IllegalAccessException e) {
+            e.printStackTrace();
+          } catch (InvocationTargetException e) {
+            e.printStackTrace();
+          }
+        }
+      }
+      if (bean instanceof DisposableBean) {
+        ((DisposableBean) bean).destroy();
+      }
+    }
   }
 }
