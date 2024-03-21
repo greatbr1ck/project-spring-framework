@@ -2,17 +2,13 @@ package org.springframework.beans.factory;
 
 import org.springframework.beans.factory.annotation.Configuration;
 import org.springframework.beans.factory.stereotype.Component;
+import org.springframework.exceptions.ConfigurationsException;
 
 import java.io.File;
-import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.exceptions.ConfigurationsException;
-import test.MyApplicationContextConfiguration;
 
 public class FileScanner {
     public static ArrayList<Class> getComponentFiles(String basePackage) throws URISyntaxException, ClassNotFoundException, InstantiationException, IllegalAccessException {

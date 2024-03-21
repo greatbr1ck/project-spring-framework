@@ -1,4 +1,5 @@
 package org.springframework.beans.factory.stereotype;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

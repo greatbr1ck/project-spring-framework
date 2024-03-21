@@ -5,5 +5,5 @@ import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PreDestroy {
-  // для методов, которые надо вызвать при закрытии контейнера
+    // для методов, которые надо вызвать при закрытии контейнера
 }
