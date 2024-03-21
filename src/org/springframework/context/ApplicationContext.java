@@ -3,8 +3,6 @@ package org.springframework.context;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.exceptions.BeanException;
 import org.springframework.exceptions.ConfigurationsException;
-
-import java.io.IOException;
 import java.net.URISyntaxException;
 
 public class ApplicationContext {
@@ -20,7 +18,7 @@ public class ApplicationContext {
     }
 
     public ApplicationContext(Class<?> configuration)
-            throws ReflectiveOperationException, IOException, URISyntaxException, BeanException {
+            throws ReflectiveOperationException, URISyntaxException, BeanException {
         beanFactory.instantiate(configuration);
         beanFactory.populateProperties();
         beanFactory.injectBeanNames();
