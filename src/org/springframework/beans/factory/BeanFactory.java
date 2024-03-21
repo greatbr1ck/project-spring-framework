@@ -66,7 +66,7 @@ public class BeanFactory {
 
     public void findComponent(String basePackage)
             throws ReflectiveOperationException, URISyntaxException, BeanException {
-        ArrayList<Class> componentFiles = FileScanner.getComponentFiles(basePackage);
+        ArrayList<Class<?>> componentFiles = FileScanner.getComponentFiles(basePackage);
 
         for (var component : Objects.requireNonNull(componentFiles)) {
             addBean(component.newInstance());
