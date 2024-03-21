@@ -3,7 +3,8 @@
 Student project for Programming Technologies and Java Programming courses
 Second semester, spring 2024
 
-## Authors: 
+## Authors:
+
 - Svetlitskiy Mikhail
 - Nikitin Egor
 - Sviridova Nadezhda

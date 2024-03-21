@@ -3,6 +3,7 @@ package org.springframework.context;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.exceptions.BeanException;
 import org.springframework.exceptions.ConfigurationsException;
+
 import java.net.URISyntaxException;
 
 public class ApplicationContext {
