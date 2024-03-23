@@ -1,6 +1,6 @@
 # Spring Framework
 
-Student project for Programming Technologies and Java Programming courses
+Student project for Programming Technologies and Java Programming courses\
 Second semester, spring 2024
 
 ## Authors:
