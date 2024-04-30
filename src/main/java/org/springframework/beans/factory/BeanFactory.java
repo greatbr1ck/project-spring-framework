@@ -8,6 +8,7 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.exceptions.BeanException;
 import org.springframework.exceptions.ConfigurationsException;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -37,7 +38,7 @@ public class BeanFactory {
     }
 
     public void instantiate(String basePackage)
-            throws ReflectiveOperationException, URISyntaxException, BeanException, ConfigurationsException {
+            throws ReflectiveOperationException, URISyntaxException, BeanException, ConfigurationsException, IOException {
         try {
             Class<?> configuration = FileScanner.getConfigurations(basePackage);
             for (var method : configuration.getMethods()) {
@@ -52,7 +53,7 @@ public class BeanFactory {
     }
 
     public void instantiate(Class<?> configuration)
-            throws ReflectiveOperationException, URISyntaxException, BeanException {
+            throws ReflectiveOperationException, URISyntaxException, BeanException, IOException {
         for (var method : configuration.getMethods()) {
             if (method.isAnnotationPresent(Bean.class)) {
                 method.setAccessible(true);
@@ -65,7 +66,7 @@ public class BeanFactory {
     }
 
     public void findComponent(String basePackage)
-            throws ReflectiveOperationException, URISyntaxException, BeanException {
+            throws ReflectiveOperationException, BeanException {
         ArrayList<Class<?>> componentFiles = FileScanner.getComponentFiles(basePackage);
 
         for (var component : Objects.requireNonNull(componentFiles)) {

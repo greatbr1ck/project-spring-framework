@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.ComponentScan;
 import org.springframework.beans.factory.annotation.Configuration;
 
 @Configuration
-@ComponentScan(basePackage = "test")
+@ComponentScan(basePackage = "/home/egor/work/programming_technologies/project-6/src/main/java/test")
 public class MyApplicationContextConfiguration {
 
     @Bean

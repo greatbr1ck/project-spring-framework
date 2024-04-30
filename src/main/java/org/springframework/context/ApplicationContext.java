@@ -4,6 +4,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.exceptions.BeanException;
 import org.springframework.exceptions.ConfigurationsException;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 
 public class ApplicationContext {
@@ -11,7 +12,7 @@ public class ApplicationContext {
     private final BeanFactory beanFactory = new BeanFactory();
 
     public ApplicationContext(String basePackage)
-            throws ReflectiveOperationException, URISyntaxException, BeanException, ConfigurationsException {
+            throws ReflectiveOperationException, URISyntaxException, BeanException, ConfigurationsException, IOException {
         beanFactory.instantiate(basePackage);
         beanFactory.populateProperties();
         beanFactory.injectBeanNames();
@@ -19,7 +20,7 @@ public class ApplicationContext {
     }
 
     public ApplicationContext(Class<?> configuration)
-            throws ReflectiveOperationException, URISyntaxException, BeanException {
+            throws ReflectiveOperationException, URISyntaxException, BeanException, IOException {
         beanFactory.instantiate(configuration);
         beanFactory.populateProperties();
         beanFactory.injectBeanNames();

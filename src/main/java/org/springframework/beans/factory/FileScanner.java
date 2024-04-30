@@ -4,37 +4,34 @@ import org.springframework.beans.factory.annotation.Configuration;
 import org.springframework.beans.factory.stereotype.Component;
 import org.springframework.exceptions.ConfigurationsException;
 
-import java.io.File;
+import java.io.*;
 import java.lang.annotation.Annotation;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class FileScanner {
-    public static ArrayList<Class<?>> getComponentFiles(String basePackage) throws URISyntaxException, ClassNotFoundException {
+    public static ArrayList<Class<?>> getComponentFiles(String basePackageAbsolutePath) throws ClassNotFoundException {
         ArrayList<Class<?>> componentFiles = new ArrayList<>();
-        instantiate(componentFiles, basePackage);
+
+        // basePackageAbsolutePath example
+        // basePackageAbsolutePath = "/home/egor/work/programming_technologies/project-6/src/main/java/test";
+        instantiate(componentFiles, basePackageAbsolutePath);
+
         return componentFiles;
     }
 
-    private static void instantiate(List<Class<?>> componentFiles, String rootDirectoryName) throws URISyntaxException, ClassNotFoundException {
-        String rootDirectoryPath = rootDirectoryName.replace('.', '/');
-        URL rootDirectoryURL = ClassLoader.getSystemClassLoader().getResource(rootDirectoryPath);
-        File rootDirectory = new File(Objects.requireNonNull(rootDirectoryURL).toURI());
+    private static void instantiate(List<Class<?>> componentFiles, String rootDirectoryAbsolutePath) throws ClassNotFoundException {
+        String rootDirectoryName = rootDirectoryAbsolutePath.substring(rootDirectoryAbsolutePath.lastIndexOf('/') + 1);
 
-        searchFiles(componentFiles, rootDirectory, rootDirectoryName, Component.class);
+        searchFiles(componentFiles, rootDirectoryAbsolutePath, rootDirectoryName, Component.class);
     }
 
-    static Class<?> getConfigurations(String rootDirectoryName) throws URISyntaxException, ClassNotFoundException, ConfigurationsException {
-        String rootDirectoryPath = rootDirectoryName.replace('.', '/');
-        URL rootDirectoryURL = ClassLoader.getSystemClassLoader().getResource(rootDirectoryPath);
-        File rootDirectory = new File(Objects.requireNonNull(rootDirectoryURL).toURI());
+    static Class<?> getConfigurations(String rootDirectoryAbsolutePath) throws ClassNotFoundException, ConfigurationsException {
+        String rootDirectoryName = rootDirectoryAbsolutePath.substring(rootDirectoryAbsolutePath.lastIndexOf('/') + 1);
         ArrayList<Class<?>> configurationsFiles = new ArrayList<>();
 
         try {
-            searchFiles(configurationsFiles, rootDirectory, rootDirectoryName, Configuration.class);
+            searchFiles(configurationsFiles, rootDirectoryAbsolutePath, rootDirectoryName, Configuration.class);
 
             if (configurationsFiles.isEmpty()) throw new ClassNotFoundException();
             if (configurationsFiles.size() > 1) throw new ConfigurationsException();
@@ -49,20 +46,24 @@ public class FileScanner {
         }
     }
 
-    private static void searchFiles(List<Class<?>> foundFiles, File currentDirectory, String rootDirectoryName, Class<? extends Annotation> annotationClass) throws ClassNotFoundException {
-        File[] childFiles = currentDirectory.listFiles();
+    private static void searchFiles(List<Class<?>> foundFiles, String currentDirectoryAbsolutePath, String rootDirectoryName, Class<? extends Annotation> annotationClass) throws ClassNotFoundException {
+        File currentDirectory = new File(currentDirectoryAbsolutePath);
 
-        for (var file : Objects.requireNonNull(childFiles)) {
-            String path = file.getPath();
-            if (path.endsWith(".class")) {
-                String className = path.substring(path.indexOf(rootDirectoryName), path.lastIndexOf('.')).replace('/', '.');
-                Class<?> classObject = Class.forName(className);
+        String[] childFileNames = currentDirectory.list();
 
-                if (classObject.isAnnotationPresent(annotationClass)) {
-                    foundFiles.add(classObject);
-                }
+        for (var childFileName : childFileNames) {
+            String childFileAbsolutePath = currentDirectoryAbsolutePath + '/' + childFileName;
+            File childFile = new File(childFileAbsolutePath);
+
+            if (childFile.isDirectory()) {
+                searchFiles(foundFiles, childFileAbsolutePath, rootDirectoryName, annotationClass);
             } else {
-                searchFiles(foundFiles, file, rootDirectoryName, annotationClass);
+                String childClassName = childFileAbsolutePath.substring(childFileAbsolutePath.indexOf(rootDirectoryName), childFileAbsolutePath.lastIndexOf('.')).replace('/', '.');
+                Class<?> childClassObject = Class.forName(childClassName);
+
+                if (childClassObject.isAnnotationPresent(annotationClass)) {
+                    foundFiles.add(childClassObject);
+                }
             }
         }
     }
