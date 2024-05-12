@@ -1,10 +1,12 @@
 package test;
 
 import org.springframework.beans.factory.BeanNameAware;
+import org.springframework.beans.factory.annotation.Value;
 
 public class PromotionsService implements BeanNameAware {
-
+    @Value(property = "${promotions.service.id}")
     private String id;
+
     private String beanName;
 
     public String getId() {
