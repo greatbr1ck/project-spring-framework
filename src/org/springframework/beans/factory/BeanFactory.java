@@ -2,23 +2,25 @@ package org.springframework.beans.factory;
 
 import org.springframework.beans.factory.annotation.*;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.exceptions.BeanException;
-import org.springframework.exceptions.ConfigurationsException;
-import org.springframework.exceptions.ScheduledMethodException;
+import org.springframework.exceptions.*;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class BeanFactory {
-
     private final Map<String, Object> singletons = new HashMap<>();
     private final Map<Class<?>, String> beanNameByType = new HashMap<>();
-    private final List<BeanPostProcessor> postProcessors = new ArrayList<>();
+    private final List<BeanPostProcessor> postProcessors = new ArrayList<>()
     private final List<Thread> schedule = new ArrayList<>();
+    private String basePackage;
+    private String propertiesSourcePath = "application.properties";
 
 
     public Object getBean(String beanName) {
@@ -98,6 +100,10 @@ public class BeanFactory {
                     addBean(method.invoke(configuration.newInstance()));
                 }
             }
+
+            if (configuration.isAnnotationPresent(PropertiesSource.class)) {
+                propertiesSourcePath = configuration.getAnnotation(PropertiesSource.class).propertiesSourcePath();
+            }
         } catch (ClassNotFoundException ignored) {
         }
         findComponent(basePackage);
@@ -111,8 +117,14 @@ public class BeanFactory {
                 addBean(method.invoke(configuration.newInstance()));
             }
         }
+
         if (configuration.isAnnotationPresent(ComponentScan.class)) {
-            findComponent(configuration.getAnnotation(ComponentScan.class).basePackage());
+            basePackage = configuration.getAnnotation(ComponentScan.class).basePackage();
+            findComponent(basePackage);
+        }
+
+        if (configuration.isAnnotationPresent(PropertiesSource.class)) {
+            propertiesSourcePath = configuration.getAnnotation(PropertiesSource.class).propertiesSourcePath();
         }
     }
 
@@ -125,7 +137,7 @@ public class BeanFactory {
         }
     }
 
-    public void populateProperties() throws IllegalAccessException {
+    public void populateBeans() throws IllegalAccessException {
         for (Object object : singletons.values()) {
             for (Field field : object.getClass().getDeclaredFields()) {
                 if (field.isAnnotationPresent(Autowired.class)) {
@@ -165,9 +177,73 @@ public class BeanFactory {
         }
     }
 
+
     public void startScheduleThread() {
         for (Thread thread : schedule) {
             thread.start();
+        }
+    }
+
+    public void populateProperties() throws PropertiesSourceException, IOException, PropertyFormatException, PropertyNotFoundException, IllegalAccessException, IncorrectClassPropertyException {
+        for (Object object : singletons.values()) {
+            for (Field field : object.getClass().getDeclaredFields()) {
+                if (field.isAnnotationPresent(Value.class)) {
+                    String stringProperty = field.getAnnotation(Value.class).property();
+
+                    if (stringProperty != null && stringProperty.matches("\\$\\{.+\\}")) {
+                        Path propertiesSourceFile = Path.of("src/resources/" + propertiesSourcePath);
+                        System.out.println(propertiesSourceFile);
+
+                        if (!Files.exists(propertiesSourceFile)) {
+                            throw new PropertiesSourceException();
+                        }
+
+                        String nameProperty = stringProperty.substring(2, stringProperty.length() - 1);
+
+                        boolean find = false;
+
+                        List<String> propertiesLines = Files.readAllLines(propertiesSourceFile);
+                        for (String line : propertiesLines) {
+                            if(line.isEmpty() || line.charAt(0) == '#') {
+                                continue;
+                            }
+
+                            String[] splitLine = line.split("=");
+
+                            if (splitLine.length != 2 || splitLine[0] == null || splitLine[1] == null) {
+                                throw new PropertyFormatException();
+                            }
+
+                            if (nameProperty.equals(splitLine[0])) {
+                                stringProperty = splitLine[1];
+                                find = true;
+                                break;
+                            }
+                        }
+                        if (!find) {
+                            throw new PropertyNotFoundException();
+                        }
+                    }
+
+                    field.setAccessible(true);
+                    if (field.getType().isAssignableFrom(String.class)) {
+                        field.set(object, stringProperty);
+                    } else if (field.getType().isAssignableFrom(Integer.class) || field.getType().isAssignableFrom(int.class)) {
+                        field.set(object, Integer.parseInt(stringProperty));
+                    } else if (field.getType().isAssignableFrom(Long.class) || field.getType().isAssignableFrom(long.class)) {
+                        field.set(object, Long.parseLong(stringProperty));
+                    } else if (field.getType().isAssignableFrom(Float.class) || field.getType().isAssignableFrom(float.class)) {
+                        field.set(object, Float.parseFloat(stringProperty));
+                    } else if (field.getType().isAssignableFrom(Double.class) || field.getType().isAssignableFrom(double.class)) {
+                        field.set(object, Double.parseDouble(stringProperty));
+                    } else if (field.getType().isAssignableFrom(Boolean.class) || field.getType().isAssignableFrom(boolean.class)) {
+                        field.set(object, Boolean.parseBoolean(stringProperty));
+                    } else {
+                        throw new IncorrectClassPropertyException();
+                    }
+
+                }
+            }
         }
     }
 

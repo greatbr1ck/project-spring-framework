@@ -11,7 +11,6 @@ public class App {
 
     public static void main(String[] args)
             throws IOException, URISyntaxException, ReflectiveOperationException, BeanException, InterruptedException, ScheduledMethodException {
-
         ApplicationContext applicationContext = new ApplicationContext(
                 MyApplicationContextConfiguration.class);
         ProductService productService = (ProductService) applicationContext.getBeanFactory().getBean("test.ProductService");

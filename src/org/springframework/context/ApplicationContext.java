@@ -1,10 +1,10 @@
 package org.springframework.context;
 
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.exceptions.BeanException;
-import org.springframework.exceptions.ConfigurationsException;
-import org.springframework.exceptions.ScheduledMethodException;
+import org.springframework.exceptions.*;
 
+
+import java.io.IOException;
 import java.net.URISyntaxException;
 
 public class ApplicationContext {
@@ -14,6 +14,7 @@ public class ApplicationContext {
     public ApplicationContext(String basePackage)
             throws ReflectiveOperationException, URISyntaxException, BeanException, ConfigurationsException, ScheduledMethodException {
         beanFactory.instantiate(basePackage);
+        beanFactory.populateBeans();
         beanFactory.populateProperties();
         beanFactory.injectBeanNames();
         beanFactory.initializeBeans();
@@ -23,6 +24,7 @@ public class ApplicationContext {
     public ApplicationContext(Class<?> configuration)
             throws ReflectiveOperationException, URISyntaxException, BeanException, ScheduledMethodException {
         beanFactory.instantiate(configuration);
+        beanFactory.populateBeans();
         beanFactory.populateProperties();
         beanFactory.injectBeanNames();
         beanFactory.initializeBeans();
