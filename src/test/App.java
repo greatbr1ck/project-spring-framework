@@ -8,8 +8,7 @@ import java.net.URISyntaxException;
 
 public class App {
 
-    public static void main(String[] args)
-            throws IOException, URISyntaxException, ReflectiveOperationException, BeanException {
+    public static void main(String[] args) throws Exception {
 
         ApplicationContext applicationContext = new ApplicationContext(
                 MyApplicationContextConfiguration.class);
