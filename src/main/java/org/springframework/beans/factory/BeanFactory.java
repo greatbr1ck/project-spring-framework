@@ -99,19 +99,17 @@ public class BeanFactory {
     }
 
     public void initializeBeans() {
-        for (Map.Entry<String, Object> entry: singletons.entrySet()) {
-            String name = entry.getKey();
-            Object bean = entry.getValue();
+        singletons.forEach((key, value) ->{
             for (BeanPostProcessor postProcessor : postProcessors) {
-                postProcessor.postProcessBeforeInitialization(bean, name);
+                postProcessor.postProcessBeforeInitialization(value, key);
             }
-            if (bean instanceof org.springframework.beans.factory.InitializingBean) {
-                ((org.springframework.beans.factory.InitializingBean) bean).afterPropertiesSet();
+            if (value instanceof org.springframework.beans.factory.InitializingBean) {
+                ((org.springframework.beans.factory.InitializingBean) value).afterPropertiesSet();
             }
             for (BeanPostProcessor postProcessor : postProcessors) {
-                postProcessor.postProcessAfterInitialization(bean, name);
+                postProcessor.postProcessAfterInitialization(value, key);
             }
-        }
+        });
     }
 
     public void close() {
