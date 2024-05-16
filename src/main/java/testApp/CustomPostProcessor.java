@@ -1,4 +1,4 @@
-package test;
+package testApp;
 
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
