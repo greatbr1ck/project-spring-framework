@@ -1,11 +1,11 @@
-package test;
+package testApp;
 
 import org.springframework.beans.factory.annotation.Bean;
 import org.springframework.beans.factory.annotation.ComponentScan;
 import org.springframework.beans.factory.annotation.Configuration;
 
 @Configuration
-@ComponentScan(basePackage = "/home/egor/work/programming_technologies/project-6/src/main/java/test")
+@ComponentScan(basePackage = "/home/egor/work/programming_technologies/project-6/src/main/java/testApp")
 public class MyApplicationContextConfiguration {
 
     @Bean

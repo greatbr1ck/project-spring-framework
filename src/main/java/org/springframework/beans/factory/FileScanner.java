@@ -14,7 +14,7 @@ public class FileScanner {
         ArrayList<Class<?>> componentFiles = new ArrayList<>();
 
         // basePackageAbsolutePath example
-        // basePackageAbsolutePath = "/home/egor/work/programming_technologies/project-6/src/main/java/test";
+        // basePackageAbsolutePath = "/home/egor/work/programming_technologies/project-6/src/main/java/testApp;
         instantiate(componentFiles, basePackageAbsolutePath);
 
         return componentFiles;
