@@ -163,18 +163,17 @@ public class BeanFactory {
     }
 
     public void initializeBeans() {
-        for (String name : singletons.keySet()) {
-            Object bean = singletons.get(name);
+        singletons.forEach((name, bean) ->{
             for (BeanPostProcessor postProcessor : postProcessors) {
                 postProcessor.postProcessBeforeInitialization(bean, name);
             }
-            if (bean instanceof InitializingBean) {
-                ((InitializingBean) bean).afterPropertiesSet();
+            if (bean instanceof org.springframework.beans.factory.InitializingBean) {
+                ((org.springframework.beans.factory.InitializingBean) bean).afterPropertiesSet();
             }
             for (BeanPostProcessor postProcessor : postProcessors) {
                 postProcessor.postProcessAfterInitialization(bean, name);
             }
-        }
+        });
     }
 
 
